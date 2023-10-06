@@ -5,7 +5,7 @@ homepage: "https://github.com/mrtnetwork/blockchain_utils"
 repository: "https://github.com/mrtnetwork/blockchain_utils"
 
 environment:
-  sdk: '>=3.1.1 <4.0.0'
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   pointycastle: ^3.7.3

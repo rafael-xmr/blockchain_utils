@@ -171,7 +171,7 @@ class BitcoinSigner {
 
   /// Signs a given Schnorr-based transaction digest using the Schnorr signature scheme.
   List<int> signSchnorrTransaction(List<int> digest,
-      {required List<dynamic> tapScripts, required bool tweak}) {
+      {required List<dynamic> tapScripts, required bool tweak, List<int>? aux}) {
     if (digest.length != 32) {
       throw ArgumentException("The message must be a 32-byte array.");
     }
@@ -185,7 +185,7 @@ class BitcoinSigner {
     } else {
       byteKey = signingKey.privateKey.toBytes();
     }
-    final List<int> aux = QuickCrypto.sha256Hash(<int>[...digest, ...byteKey]);
+    aux ??= QuickCrypto.sha256Hash(<int>[...digest, ...byteKey]);
     final d0 = BigintUtils.fromBytes(byteKey);
 
     if (!(BigInt.one <= d0 && d0 <= BitcoinSignerUtils._order - BigInt.one)) {

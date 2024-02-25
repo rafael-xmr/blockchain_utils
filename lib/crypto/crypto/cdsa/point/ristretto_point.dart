@@ -233,7 +233,7 @@ class RistrettoPoint extends EDPoint {
   ///
   /// Returns:
   ///   - List<int>: A byte array representing the RistrettoPoint in Edwards encoding.
-  List<int> toEdwardBytes([EncodeType encodeType = EncodeType.comprossed]) {
+  List<int> toEdwardBytes([EncodeType encodeType = EncodeType.compressed]) {
     return super.toBytes(encodeType);
   }
 
@@ -301,7 +301,7 @@ class RistrettoPoint extends EDPoint {
   ///     encoding rules. The result is a compact byte array representation.
   /// [encodeType] works only for [toEdwardBytes]
   @override
-  List<int> toBytes([EncodeType encodeType = EncodeType.comprossed]) {
+  List<int> toBytes([EncodeType encodeType = EncodeType.compressed]) {
     final primeP = Curves.curveEd25519.p;
     final pointCoords = getCoords();
     BigInt x = pointCoords[0];

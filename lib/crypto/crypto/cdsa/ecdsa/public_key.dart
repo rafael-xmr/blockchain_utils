@@ -84,7 +84,7 @@ class ECDSAPublicKey {
   @override
   int get hashCode => generator.hashCode ^ point.hashCode;
 
-  List<int> toBytes([EncodeType encodeType = EncodeType.comprossed]) {
+  List<int> toBytes([EncodeType encodeType = EncodeType.compressed]) {
     return point.toBytes(encodeType);
   }
 }

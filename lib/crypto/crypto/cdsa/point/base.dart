@@ -9,13 +9,13 @@ import 'package:blockchain_utils/exception/exception.dart';
 import 'package:blockchain_utils/tuple/tuple.dart';
 
 /// An enumeration representing different types of encoding for elliptic curve points.
-enum EncodeType { comprossed, hybrid, raw, uncompressed }
+enum EncodeType { compressed, hybrid, raw, uncompressed }
 
 /// An abstract class representing an elliptic curve point.
 abstract class AbstractPoint {
   /// Converts the elliptic curve point to a byte array with the specified encoding type.
   /// The default encoding type is 'compressed'.
-  List<int> toBytes([EncodeType encodeType = EncodeType.comprossed]) {
+  List<int> toBytes([EncodeType encodeType = EncodeType.compressed]) {
     if (this is EDPoint) {
       return _edwardsEncode();
     }
@@ -33,7 +33,7 @@ abstract class AbstractPoint {
 
   /// Encodes the elliptic curve point as a hexadecimal string with the specified encoding type.
   /// The default encoding type is 'compressed'.
-  String toHex([EncodeType encodeType = EncodeType.comprossed]) {
+  String toHex([EncodeType encodeType = EncodeType.compressed]) {
     final bytes = toBytes(encodeType);
     return BytesUtils.toHexString(bytes);
   }
@@ -70,8 +70,7 @@ abstract class AbstractPoint {
 
   /// Internal method to encode an elliptic curve point in compressed form.
   List<int> _compressedEncode() {
-    List<int> xStr =
-        BigintUtils.toBytes(x, length: BigintUtils.orderLen(curve.p));
+    List<int> xStr = BigintUtils.toBytes(x, length: BigintUtils.orderLen(curve.p));
     List<int> prefix;
     if (y & BigInt.one != BigInt.zero) {
       prefix = List<int>.from([0x03]);
@@ -88,10 +87,8 @@ abstract class AbstractPoint {
 
   /// Internal method to encode an elliptic curve point.
   List<int> _encode() {
-    final xBytes =
-        BigintUtils.toBytes(x, length: BigintUtils.orderLen(curve.p));
-    final yBytes =
-        BigintUtils.toBytes(y, length: BigintUtils.orderLen(curve.p));
+    final xBytes = BigintUtils.toBytes(x, length: BigintUtils.orderLen(curve.p));
+    final yBytes = BigintUtils.toBytes(y, length: BigintUtils.orderLen(curve.p));
     return List<int>.from([...xBytes, ...yBytes]);
   }
 
@@ -144,14 +141,24 @@ abstract class AbstractPoint {
           throw ArgumentException("invalid key length");
         }
       } else if (keyLen == rawEncodingLength ~/ 2 + 1) {
-        encodeType = EncodeType.comprossed;
+        encodeType = EncodeType.compressed;
       } else {
-        throw ArgumentException("invalid key length");
+        final x = BigintUtils.fromBytes(data);
+
+        if (curve.isXCoord(x)) {
+          var coords = curve.liftX(x);
+          if (coords[1].isOdd) {
+            coords = curve.negate(coords);
+          }
+
+          encodeType = EncodeType.compressed;
+          return Tuple(coords[0], coords[1]);
+        }
       }
     }
     curve as CurveFp;
     switch (encodeType) {
-      case EncodeType.comprossed:
+      case EncodeType.compressed:
         return _fromCompressed(data, curve);
       case EncodeType.uncompressed:
         return _fromRawEncoding(data.sublist(1), rawEncodingLength);
@@ -192,8 +199,7 @@ abstract class AbstractPoint {
   }
 
   /// Creates an elliptic curve point from a raw byte encoding.
-  static Tuple<BigInt, BigInt> _fromRawEncoding(
-      List<int> data, int rawEncodingLength) {
+  static Tuple<BigInt, BigInt> _fromRawEncoding(List<int> data, int rawEncodingLength) {
     assert(data.length == rawEncodingLength);
 
     final xs = data.sublist(0, rawEncodingLength ~/ 2);
@@ -231,8 +237,7 @@ abstract class AbstractPoint {
   }
 
   /// Creates an elliptic curve point from a hybrid byte encoding.
-  static Tuple<BigInt, BigInt> _fromHybrid(
-      List<int> data, int rawEncodingLength) {
+  static Tuple<BigInt, BigInt> _fromHybrid(List<int> data, int rawEncodingLength) {
     assert(data[0] == 0x06 || data[0] == 0x07);
 
     // Primarily use the uncompressed as it's easiest to handle
@@ -241,8 +246,7 @@ abstract class AbstractPoint {
     final y = result.item2;
     final prefix = y & BigInt.one;
     // Validate if it's self-consistent if we're asked to do that
-    if (((prefix == BigInt.one && data[0] != 0x07) ||
-        (prefix == BigInt.zero && data[0] != 0x06))) {
+    if (((prefix == BigInt.one && data[0] != 0x07) || (prefix == BigInt.zero && data[0] != 0x06))) {
       throw ArgumentException('Inconsistent hybrid point encoding');
     }
 
